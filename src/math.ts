@@ -1,0 +1,1 @@
+export const saturate = ( val : number ) => !val ? 0 : val > 1 ? 1 : val < 0 ? 0 : val
