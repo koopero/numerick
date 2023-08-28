@@ -1,4 +1,5 @@
-`numerick` is a module for the parsing & formatting of numbers in a variety of human-friendly formats, as well conversion to and from normaliz
+`numerick` is a module for the parsing & formatting of numbers in a variety of human-friendly formats, as well conversion to and from normalized forms.
+
 
 # Usage
 
@@ -10,11 +11,46 @@ stringToNumber( '1.234k', { metric: true } ) == 1234
 stringToNumber( '1110.01', { radix: 2 } ) == 14.25
 ```
 
-## Formatting
+## String Formatting
 ``` js
 import { numberToString } from 'numerick'
 
-numberToString( 1234, { separator: ',', padStart: true, length: 8 } ) == '   1,234'
+numberToString( 1234, { separator: ',', padStart: true, length: 8, unit: 'u' } ) == '  1,234u'
+```
+
+## HTML Formatting
+
+``` jsx
+import { numberFormat } from 'numerick'
+
+const config = {
+  precision: 4,
+  unit: 'b'
+}
+
+const [
+    prefix, // Supplied prefix, plus left padding.
+    sign, // "-" or blank
+    nan, // "NaN", "Infinity" or blank.
+    whole, // Integer portion of number, including separators
+    point, // Decimal point "."
+    fract, // Fractional portion of number.
+    multiplier, // Metric multiplier, or "e" for scientific form.
+    exponent, // Numeric portion of scientific form.
+    unit, // Unit as supplied.
+] = numberFormat( 1234.5678, config )
+
+<span>
+  <span>{ prefix }</span>
+  <span>{ sign }</span>
+  <span>{ nan }</span>
+  <span>{ whole }</span>
+  <span>{ point }</span>
+  <span>{ fract }</span>
+  <span>{ multiplier }</span>
+  <span>{ exponent }</span>
+  <span>{ unit }</span>
+</span>
 ```
 
 ## Normalized Numbers
@@ -35,6 +71,51 @@ normToNumber( 1,    range ) == 200
 numberToNorm( 50, range ) == 0.75
 ```
 
+# Metric
+
+``` js
+import {
+  stringToNumber, numberToString,
+  metricScaleAscii
+} from 'numerick'
+
+// Read number with metric notation.
+stringToNumber( '1M', { metric: true } ) == 1e6
+stringToNumber( '1m', { metric: true } ) == 1e-3
+
+// Format numbers to metric
+numberToString( 1e-3, { metric: true } ) == '1m'
+numberToString( 1e-6, { metric: true } ) == '1μ'
+
+// Optionally, avoid using the μ character
+numberToString( 1e-6, { metric: true, metricScale: metricScaleAscii } ) == '1u'
+
+// Use only a given range within metric scale
+numberToString( 1e-3, { metric: true, metricMin: 1, metricMax: 1000 } ) == '0.001'
+numberToString( 1e3, { metric: true, metricMin: 1, metricMax: 1000 } ) == '1k'
+numberToString( 1e6, { metric: true, metricMin: 1, metricMax: 1000 } ) == '1000k'
+
+```
+
+## Binary Metric
+``` js
+import { 
+  stringToNumber, numberToString, 
+  metricScaleBinary,
+  metricScaleBinaryParse,
+  metricScaleBinaryShort, 
+} from 'numerick
+
+// Read binary metric numbers with loose formatting
+stringToNumber( '64k', { metric: true, metricScale: metricScaleBinaryParse } ) == 65536
+stringToNumber( '32Kib', { metric: true, metricScale: metricScaleBinaryParse } ) == 32768
+
+// Format binary metric numbers with correct prefixes
+numberToString( 4096, { metric: true, metricScale: metricScaleBinary } ) == '4Ki'
+
+// Format binary metric numbers with short, incorrect prefixes
+numberToString( 2**21, { metric: true, metricScale: metricScaleBinaryShort } ) == '2m'
+```
 
 # Functions
 

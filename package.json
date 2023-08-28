@@ -1,6 +1,6 @@
 {
   "name": "numerick",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Bidirectional conversion between inputs and numbers",
   "source": "src/numerick.ts",
   "main": "dist/index.js",
@@ -8,12 +8,19 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest",
-    "test-watch": "jest --watch test/current.test.ts",
-    "lint": "eslint src",
-    "build": "tsc"
+    "test-watch": "jest --watch",
+    "prettier": "prettier src test",
+    "lint": "eslint src test",
+    "clean": "rm -rf dist .parcel-cache",
+    "build": "parcel build"
   },
   "author": "Samm Zuest Cooper <koopero@gmail.com>",
   "license": "ISC",
+  "prettier": {
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "semi": false
+  }, 
   "devDependencies": {
     "@jest/globals": "^29.5.0",
     "@parcel/packager-ts": "^2.9.3",

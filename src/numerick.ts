@@ -1,7 +1,7 @@
-import { floor, isRealNumber, log10, max, minmax, pow, saturate } from './math'
+import { floor, isRealNumber, log10, max, minmax, pow, saturate, exp, log } from "./math"
 export const isArray = ( value ) => Array.isArray( value )
 
-const charsetStandard = '0123456789abcdefghijklmnopqrstuvwxyz'
+const charsetStandard = "0123456789abcdefghijklmnopqrstuvwxyz"
 
 export interface NumerickConfig {
   min?: number,
@@ -11,6 +11,7 @@ export interface NumerickConfig {
   quant?: number,
   clamp?: boolean,
   bias?: number,
+  logarithmic?: boolean,
 
   deadzone?: number,
   expo?: number,
@@ -48,7 +49,7 @@ export interface NumerickConfig {
 
   negative?: string,
   positive?: string,
-  point?: string,
+  pointString?: string,
   separators?: string | string[],
   separateDigits?: number | number[],
 
@@ -63,29 +64,31 @@ const configDefault : NumerickConfig = {
   origin: 0,
   expo: 0,
   digits: 4,
+  step: 0,
+  logarithmic: false,
   quant: 0.0000125,
   deadzone: 0,
   length: 0,
-  negative: '-',
-  positive: '',
+  negative: "-",
+  positive: "",
   metric: false,
   metricFudge: 1,
   metricMin: 0,
   metricMax: 0,
-  prefix: '',
-  unit:'',
-  point:'.',
-  separator: '',
-  separators: ',\'_',
+  prefix: "",
+  unit:"",
+  pointString:".",
+  separator: "",
+  separators: ",'_",
   separateDigits: 3,
-  nanString: 'NaN',
-  infinityString: 'Infinity',
+  nanString: "NaN",
+  infinityString: "Infinity",
   nanValue: NaN,
   padStart: false,
   padZero: false,
-  padString: ' ',
-  zeroString: '0',
-  scientificString: 'e',
+  padString: " ",
+  zeroString: "0",
+  scientificString: "e",
   scientificMin: 1e-3,
   scientificMax: 0,
   precision: 1,
@@ -94,106 +97,127 @@ const configDefault : NumerickConfig = {
 }
 
 export const metricScaleParse = {
-  'Y': 1e24,
-  'Z': 1e21,
-  'E': 1e18,
-  'P': 1e15,
-  'T': 1e12,
-  'G': 1e9,
-  'M': 1e6,
-  'k': 1e3,
-  'h': 1e2,
-  'da': 1e1,
-  'd': 1e-1,
-  'c': 1e-2,
-  'm': 1e-3,
-  'u': 1e-6,
-  'μ': 1e-6,
-  'n': 1e-9,
-  'p': 1e-12,
-  'f': 1e-15,
-  'a': 1e-18,
-  'z': 1e-21,
-  'y': 1e-24
+  "Y": 1e24,
+  "Z": 1e21,
+  "E": 1e18,
+  "P": 1e15,
+  "T": 1e12,
+  "G": 1e9,
+  "M": 1e6,
+  "k": 1e3,
+  "h": 1e2,
+  "da": 1e1,
+  "": 1,
+  "d": 1e-1,
+  "c": 1e-2,
+  "m": 1e-3,
+  "u": 1e-6,
+  "μ": 1e-6,
+  "n": 1e-9,
+  "p": 1e-12,
+  "f": 1e-15,
+  "a": 1e-18,
+  "z": 1e-21,
+  "y": 1e-24
 }
 
 export const metricScaleFormat = {
-  'Y': 1e24,
-  'Z': 1e21,
-  'E': 1e18,
-  'P': 1e15,
-  'T': 1e12,
-  'G': 1e9,
-  'M': 1e6,
-  'k': 1e3,
-  '': 1e0,
-  'm': 1e-3,
-  'μ': 1e-6,
-  'n': 1e-9,
-  'p': 1e-12,
-  'f': 1e-15,
-  'a': 1e-18,
-  'z': 1e-21,
-  'y': 1e-24
+  "Y": 1e24,
+  "Z": 1e21,
+  "E": 1e18,
+  "P": 1e15,
+  "T": 1e12,
+  "G": 1e9,
+  "M": 1e6,
+  "k": 1e3,
+  "": 1e0,
+  "m": 1e-3,
+  "μ": 1e-6,
+  "n": 1e-9,
+  "p": 1e-12,
+  "f": 1e-15,
+  "a": 1e-18,
+  "z": 1e-21,
+  "y": 1e-24
+}
+
+export const metricScaleAscii = {
+  "Y": 1e24,
+  "Z": 1e21,
+  "E": 1e18,
+  "P": 1e15,
+  "T": 1e12,
+  "G": 1e9,
+  "M": 1e6,
+  "k": 1e3,
+  "": 1e0,
+  "m": 1e-3,
+  "u": 1e-6,
+  "n": 1e-9,
+  "p": 1e-12,
+  "f": 1e-15,
+  "a": 1e-18,
+  "z": 1e-21,
+  "y": 1e-24
 }
 
 const pow1024 = ( a : number ) => pow( 1024, a )
 
 export const metricScaleBinary = {
-  'Yi': pow1024( 8 ),
-  'Zi': pow1024( 7 ),
-  'Ei': pow1024( 6 ),
-  'Pi': pow1024( 5 ),
-  'Ti': pow1024( 4 ),
-  'Gi': pow1024( 3 ),
-  'Mi': pow1024( 2 ),
-  'Ki': pow1024( 1 ),
+  "Yi": pow1024( 8 ),
+  "Zi": pow1024( 7 ),
+  "Ei": pow1024( 6 ),
+  "Pi": pow1024( 5 ),
+  "Ti": pow1024( 4 ),
+  "Gi": pow1024( 3 ),
+  "Mi": pow1024( 2 ),
+  "Ki": pow1024( 1 ),
 }
 
 export const metricScaleBinaryParse = {
-  'Yi': pow1024( 8 ),
-  'Y': pow1024( 8 ),
-  'yi': pow1024( 8 ),
-  'y': pow1024( 8 ),
-  'Zi': pow1024( 7 ),
-  'Z': pow1024( 7 ),
-  'zi': pow1024( 7 ),
-  'z': pow1024( 7 ),
-  'Ei': pow1024( 6 ),
-  'E': pow1024( 6 ),
-  'ei': pow1024( 6 ),
-  'e': pow1024( 6 ),
-  'Pi': pow1024( 5 ),
-  'P': pow1024( 5 ),
-  'pi': pow1024( 5 ),
-  'p': pow1024( 5 ),
-  'Ti': pow1024( 4 ),
-  'T': pow1024( 4 ),
-  'ti': pow1024( 4 ),
-  't': pow1024( 4 ),
-  'Gi': pow1024( 3 ),
-  'G': pow1024( 3 ),
-  'gi': pow1024( 3 ),
-  'g': pow1024( 3 ),
-  'Mi': pow1024( 2 ),
-  'M': pow1024( 2 ),
-  'mi': pow1024( 2 ),
-  'm': pow1024( 2 ),
-  'Ki': pow1024( 1 ),
-  'K': pow1024( 1 ),
-  'ki': pow1024( 1 ),
-  'k': pow1024( 1 ),
+  "Yi": pow1024( 8 ),
+  "Y": pow1024( 8 ),
+  "yi": pow1024( 8 ),
+  "y": pow1024( 8 ),
+  "Zi": pow1024( 7 ),
+  "Z": pow1024( 7 ),
+  "zi": pow1024( 7 ),
+  "z": pow1024( 7 ),
+  "Ei": pow1024( 6 ),
+  "E": pow1024( 6 ),
+  "ei": pow1024( 6 ),
+  "e": pow1024( 6 ),
+  "Pi": pow1024( 5 ),
+  "P": pow1024( 5 ),
+  "pi": pow1024( 5 ),
+  "p": pow1024( 5 ),
+  "Ti": pow1024( 4 ),
+  "T": pow1024( 4 ),
+  "ti": pow1024( 4 ),
+  "t": pow1024( 4 ),
+  "Gi": pow1024( 3 ),
+  "G": pow1024( 3 ),
+  "gi": pow1024( 3 ),
+  "g": pow1024( 3 ),
+  "Mi": pow1024( 2 ),
+  "M": pow1024( 2 ),
+  "mi": pow1024( 2 ),
+  "m": pow1024( 2 ),
+  "Ki": pow1024( 1 ),
+  "K": pow1024( 1 ),
+  "ki": pow1024( 1 ),
+  "k": pow1024( 1 ),
 }
 
 export const metricScaleBinaryShort = {
-  'y': pow1024( 8 ),
-  'z': pow1024( 7 ),
-  'e': pow1024( 6 ),
-  'p': pow1024( 5 ),
-  't': pow1024( 4 ),
-  'g': pow1024( 3 ),
-  'm': pow1024( 2 ),
-  'k': pow1024( 1 ),
+  "y": pow1024( 8 ),
+  "z": pow1024( 7 ),
+  "e": pow1024( 6 ),
+  "p": pow1024( 5 ),
+  "t": pow1024( 4 ),
+  "g": pow1024( 3 ),
+  "m": pow1024( 2 ),
+  "k": pow1024( 1 ),
 }
 
 function isNegativeZero(value : number ) {
@@ -208,7 +232,7 @@ export function quantizeNumber( value : number, config : NumerickConfig = {} ) {
     bias = configDefault.bias,
   } = config
 
-  const useQuant = max( quant, step )
+  const useQuant = max( quant || 0, step || 0 )
   if ( useQuant ) {
     value -= origin
     value /= useQuant
@@ -233,8 +257,9 @@ export function numberApplyExpo( value : number, config : NumerickConfig = {}, e
     max = configDefault.max,
   } = config
 
-  const exp = pow( 2, expo * effect ) 
-  if ( exp ) {
+  if ( expo ) {
+    const exp = pow( 2, expo * effect ) 
+
     value -= origin
 
     const sign = value < 0 ? -1 : 1
@@ -290,9 +315,13 @@ export function normToNumber( value : number, config : NumerickConfig ) {
   const {
     min = configDefault.min,
     max = configDefault.max,
+    origin = configDefault.origin,
+    logarithmic = configDefault.logarithmic,
   } = config
 
-  value = min + ( max - min ) * value
+  value = logarithmic ? 
+    exp( log(min-origin) + ( log(max-origin) - log( min-origin ) ) * value )+origin:
+    min + ( max - min ) * value
   value = numberDeadzone( value, config, 1 )
   value = numberApplyExpo( value, config, 1 )
   value = numberToNumber( value, config )
@@ -302,16 +331,20 @@ export function normToNumber( value : number, config : NumerickConfig ) {
 
 export function numberToNorm( value : number, config : NumerickConfig = {} ) {
   const {
-    min = 0,
-    max = 1,
-    clamp = false,
+    min = configDefault.min,
+    max = configDefault.max,
+    origin = configDefault.origin,
+    logarithmic = configDefault.logarithmic,
+    clamp = configDefault.clamp,
   } = config
 
   value = quantizeNumber( value, config )
   value = numberApplyExpo( value, config, -1 )
   value = numberDeadzone( value, config, -1 )
   
-  value = ( value - min ) / ( max - min )
+  value = logarithmic ?
+    ( log( value-origin ) - log(min-origin) ) / ( log(max-origin) - log( min-origin ) )
+    : ( value - min ) / ( max - min )
 
   if ( clamp ) {
     value = saturate( value )
@@ -340,7 +373,7 @@ export function numberToNumber( value: number, config : NumerickConfig = {} ) {
   return value
 }
 
-export function numberToString( num : number, config : NumerickConfig = {} ) {
+export function numberFormat( num : number, config : NumerickConfig = {} ) {
   const {
     radix = configDefault.radix,
     length = configDefault.length,
@@ -349,7 +382,7 @@ export function numberToString( num : number, config : NumerickConfig = {} ) {
     separateDigits = configDefault.separateDigits,
     positive = configDefault.positive,
     negative = configDefault.negative,
-    point = configDefault.point,
+    pointString = configDefault.pointString,
     unit = configDefault.unit,
     padStart = configDefault.padStart,
     padZero = configDefault.padZero,
@@ -372,17 +405,25 @@ export function numberToString( num : number, config : NumerickConfig = {} ) {
     charset, 
   } = config
 
-  if ( isNaN( num ) )
-    return nanString
+  let resultPrefix = ""
+  let resultSign = ""
+  let resultNaN = ""
+  let resultWhole = ""
+  let resultPoint = ""
+  let resultFract = ""
+  let resultMultiplier = ""
+  let resultExponent = ""
 
-  const sign = num < 0 ? -1 : 1
+  
+  const sign = num < 0 || ( signZero && isNegativeZero( num ) ) ? -1 : 1
+  resultSign = sign < 0 || ( signZero && isNegativeZero( num * sign ) ) ? negative : positive
 
-  num *= sign
-
-  let unitStr = unit
-  let str
-
-  if ( Number.isFinite( num ) ) {
+  if ( isNaN( num ) ) {
+    resultNaN = nanString
+  } else if ( !isFinite( num ) ) {
+    resultNaN = infinityString
+  } else {
+    num *= sign
     if ( scientific ) {
       if ( num ) {
         let exponentNum = num
@@ -392,14 +433,14 @@ export function numberToString( num : number, config : NumerickConfig = {} ) {
 
         const exponent = floor(log10(exponentNum))
         num /= pow(10, exponent)
-        const exponentStr = exponent >= 0 ? '+' + exponent : String( exponent )
-        unitStr = `${scientificString}${exponentStr}` + unitStr
+        resultMultiplier = scientificString
+        resultExponent = exponent >= 0 ? "+" + exponent : String( exponent )
       } else {
-        const exponentStr = '+0'
-        unitStr = `${scientificString}${exponentStr}` + unitStr
+        resultMultiplier = scientificString
+        resultExponent = "+0"
       }
     } else if ( metric ) {
-      let metricStr = ''
+      let metricStr = ""
       for ( const prefix in metricScale ) {
         const metricMult = metricScale[prefix]
         if ( 
@@ -417,76 +458,94 @@ export function numberToString( num : number, config : NumerickConfig = {} ) {
         while( metricStr.length < metricPad )
           metricStr = padString + metricStr
 
-      unitStr = metricStr + unitStr
+      resultMultiplier = metricStr
     }
-    str = num.toString( radix )
-    if ( charset )
-      str = applyCharset( str, charsetStandard, charset )
-  } else {
-    str = infinityString
-  }
 
-  const split = splitFractional( str )
-  const [ whole ] = split
-  let [ , fract ] = split
+    const numberStr = num.toString( radix )
+    const split = splitFractional( numberStr )
+    resultWhole = split[0]
+    resultFract = split[1] || ""
+  }
 
   if ( separator ) {
-    str = formatNumberWithDigitGroups( whole, separator, separateDigits )
-  } else {
-    str = whole
+    resultWhole = formatNumberWithDigitGroups( resultWhole, separator, separateDigits )
+  } 
+
+  if ( charset ) {
+    resultWhole = applyCharset( resultWhole, charsetStandard, charset )
+    resultFract = applyCharset( resultFract, charsetStandard, charset )
   }
+  
+  let lengthSoFar = 0
+    + resultPrefix.length
+    + resultSign.length
+    + resultNaN.length
+    + resultWhole.length
+    + resultPoint.length
+    + resultMultiplier.length
+    + resultExponent.length
+    + unit.length
 
-  const signStr = sign < 0 || ( signZero && isNegativeZero( num * sign ) ) ? negative : positive
-  let digitBudget = length - signStr.length - str.length - unitStr.length 
+  
+  const digitBudget = precision == 0 ? 0
+    : precision == 1 ? ( length ? length-lengthSoFar : precisionMax )
+      : precision
 
-  if ( precision == 0 ) {
-    digitBudget = 0
-  } else if ( precision == 1 ) {
-    digitBudget = length ? digitBudget : precisionMax
-  } else {
-    digitBudget = precision
-  }
 
-  if ( digitBudget > point.length ) {
+  if ( digitBudget > pointString.length ) {
     if ( padZero && !padStart ) {
-      while( fract.length < digitBudget ) {
-        fract += zeroString
+      while( resultFract.length < digitBudget ) {
+        resultFract += zeroString
       }
     }
 
     if ( precision > 1 ) {
-      while( fract.length < precision - 1 ) {
-        fract += zeroString
+      while( resultFract.length < precision - 1 ) {
+        resultFract += zeroString
       }
     }
-
-    fract = fract.substring( 0, digitBudget - point.length )
-
-    if ( fract )
-      str = str + point + fract
+    resultFract = resultFract.substring( 0, digitBudget - pointString.length )
+    if ( resultFract ) 
+      resultPoint = pointString
+  } else {
+    resultFract = ""
   }
 
-  if ( padStart && padZero && length ) {
-    while( str.length < length - unitStr.length - signStr.length ) 
-      str = zeroString + str
+  lengthSoFar += resultPoint.length + resultFract.length
 
-    str = signStr + str
-  } else {
-    str = signStr + str
-    if ( padStart && padString ) {
-      while( str.length < length - unitStr.length ) 
-        str = padString + str
+  if ( padStart && padZero && zeroString && length ) {
+    while( lengthSoFar < length ) {
+      resultWhole = zeroString + resultWhole
+      lengthSoFar += zeroString.length
+    }
+  } else if ( padStart && padString && length ) {
+    while( lengthSoFar < length ) {
+      resultPrefix = padString + resultPrefix
+      lengthSoFar += padString.length
     }
   }
 
-  str = str + unitStr
-  return str
+  return [
+    resultPrefix,
+    resultSign,
+    resultNaN,
+    resultWhole,
+    resultPoint,
+    resultFract,
+    resultMultiplier,
+    resultExponent,
+    unit,
+  ]
+}
+
+export function numberToString( value:number, config : NumerickConfig = {} ) {
+  return numberFormat( value, config ).join("")
 }
 
 function parseNumberRegex( config : NumerickConfig = {} ) {
   const {
     radix = configDefault.radix,
-    point = configDefault.point,
+    pointString: point = configDefault.pointString,
     scientific = true,
     scientificString = configDefault.scientificString,
     charset = charsetStandard,
@@ -495,12 +554,12 @@ function parseNumberRegex( config : NumerickConfig = {} ) {
   } = config
 
   const startPadding = `[\\s${regexEscape(padString)}]*`
-  const sign = '[\\-\\+]?'
+  const sign = "[\\-\\+]?"
   const digit = isArray( charset ) ? 
-    `(${(charset as Array<string>).slice(0,radix).map( regexEscape ).join('|')})` 
+    `(${(charset as Array<string>).slice(0,radix).map( regexEscape ).join("|")})` 
     : `[${(charset as string).substring(0,radix)}]`
 
-  const scientificReg = scientific && digit.indexOf( scientificString ) == -1 ? `(${regexEscape(scientificString)}[\\-\\+]?\\d+)?` : '()'
+  const scientificReg = scientific && digit.indexOf( scientificString ) == -1 ? `(${regexEscape(scientificString)}[\\-\\+]?\\d+)?` : "()"
   const source = `^${startPadding}(${sign}(${digit}+(${regexEscape(point)}${digit}*)?|${regexEscape(infinityString)}))${scientificReg}\\s*(.+)?`
 
   return new RegExp( source )
@@ -508,11 +567,11 @@ function parseNumberRegex( config : NumerickConfig = {} ) {
 
 function applyCharset( str:string, charset: string | string[], to: string | string[] ) {
   const reg = isArray( charset ) ? 
-    `(${(charset as Array<string>).map( regexEscape ).join('|')})` 
+    `(${(charset as Array<string>).map( regexEscape ).join("|")})` 
     : `[${(charset as string)}]`
 
-  const ex = new RegExp( reg, 'g' )
-  str = str.replace( ex, ( match ) => to[charset.indexOf(match)] || '' )
+  const ex = new RegExp( reg, "g" )
+  str = str.replace( ex, ( match ) => to[charset.indexOf(match)] || "" )
   return str
 }
 
@@ -531,11 +590,11 @@ export function stringToNumberUnit( str : string, config : NumerickConfig = {} )
   } = config
 
   // Replace negative
-  if ( negative != '-' && str.startsWith( negative ) )
-    str = '-' + str.substring( negative.length )
+  if ( negative != "-" && str.startsWith( negative ) )
+    str = "-" + str.substring( negative.length )
 
   // Replace positive
-  if ( positive && positive != '+' && str.startsWith( positive ) )
+  if ( positive && positive != "+" && str.startsWith( positive ) )
     str = str.substring( positive.length )
 
 
@@ -544,7 +603,7 @@ export function stringToNumberUnit( str : string, config : NumerickConfig = {} )
   const regex = parseNumberRegex( config )
 
   const match = regex.exec( str )
-  let [ , parsed = '', , , parsedExponent = '', parsedUnit = '' ] = match || []
+  let [ , parsed = "", , , parsedExponent = "", parsedUnit = "" ] = match || []
   let mult = 1
 
   if ( parsedExponent ) {
@@ -556,7 +615,7 @@ export function stringToNumberUnit( str : string, config : NumerickConfig = {} )
 
   if ( metric && parsedUnit ) {
     for ( const prefix in metricScale ) {
-      if ( parsedUnit.startsWith( prefix ) ) {
+      if ( prefix && parsedUnit.startsWith( prefix ) ) {
         mult *= metricScale[prefix]
         parsedUnit = parsedUnit.substring( prefix.length )
         break
@@ -600,7 +659,7 @@ function parseFloatWithRadix( string : string, radix : number ) {
     return parseFloat( string )
 
   // Bugs down below.
-  const [integerPart, fractionalPart] = string.split('.')
+  const [integerPart, fractionalPart] = string.split(".")
 
   if ( !radix || radix < 2 || radix > 36 )
     return NaN
@@ -618,20 +677,20 @@ function parseFloatWithRadix( string : string, radix : number ) {
 }
 
 function splitFractional( str : string ) {
-  const split = str.split('.',2)
-  split[1] = split[1] || ''
+  const split = str.split(".",2)
+  split[1] = split[1] || ""
   return split
 }
 
 
 function removeSeparators( numberString:string, separators:string|string[] ) {
   if ( !Array.isArray( separators ) ) 
-    separators = separators.split('')
+    separators = separators.split("")
 
-  const regexSource = `(?<!^)[${separators.map( regexEscape ).join('')}]`
-  const regex = new RegExp( regexSource, 'g' )
+  const regexSource = `(?<!^)[${separators.map( regexEscape ).join("")}]`
+  const regex = new RegExp( regexSource, "g" )
 
-  return numberString.replace( regex, '' )
+  return numberString.replace( regex, "" )
 }
 
 
@@ -639,7 +698,7 @@ function formatNumberWithDigitGroups( numberString : string, separator : string,
   if ( !Array.isArray( separateDigits ) ) 
     separateDigits = [ separateDigits ]
 
-  let formattedNumber = ''
+  let formattedNumber = ""
   let groupIndex = 0
   let groupDigits = separateDigits[groupIndex]
 
@@ -664,12 +723,12 @@ export function checkConfig( config: NumerickConfig ) {
   const result = []
 
   function addError( key, message ) {
-    const type = 'error'
+    const type = "error"
     result.push( { key, type, message } )
   }
 
   function addWarning( key, message ) {
-    const type = 'warning'
+    const type = "warning"
     result.push( { key, type, message } )
   }
 
@@ -679,33 +738,36 @@ export function checkConfig( config: NumerickConfig ) {
     bias = configDefault.bias,
     origin = configDefault.origin,
     radix = configDefault.radix,
+    metric = configDefault.metric,
+    metricScale = configDefault.metricScale,
     scientific,
-    scientificString = configDefault.scientificString
+    scientificString = configDefault.scientificString,
+    logarithmic = configDefault.logarithmic,
   } = config
 
   let { charset } = config
 
-  if ( !isRealNumber( min ) ) addError( 'min', 'Invalid value' )
-  if ( !isRealNumber( max ) ) addError( 'max', 'Invalid value' )
-  if ( min == max ) addError( 'max', 'min value is equal to max' )
+  if ( !isRealNumber( min ) ) addError( "min", "Invalid value" )
+  if ( !isRealNumber( max ) ) addError( "max", "Invalid value" )
+  if ( min == max ) addError( "max", "min value is equal to max" )
 
-  if ( !isRealNumber( bias) ) addError( 'bias', 'Invalid value' )
-  if ( bias < 0 || bias > 1 ) addWarning( 'bias', 'Out of range' )
+  if ( !isRealNumber( bias) ) addError( "bias", "Invalid value" )
+  if ( bias < 0 || bias > 1 ) addWarning( "bias", "Out of range" )
 
-  if ( !isRealNumber( radix ) ) addError('radix', 'Invalid value')
-  if ( radix < 2 || radix > 36 ) addError('radix', 'Outside valid range')
+  if ( !isRealNumber( radix ) ) addError("radix", "Invalid value")
+  if ( radix < 2 || radix > 36 ) addError("radix", "Outside valid range")
 
   
   if ( origin < Math.min( min, max ) || origin > Math.max( min, max ) ) 
-    addWarning('origin', 'Outside min-max range')
+    addWarning("origin", "Outside min-max range")
 
   if ( charset ) {
     if ( charset.length < radix ) 
-      addError('charset','Length is less than radix')
+      addError("charset","Length is less than radix")
 
     for ( let index = 0; index < charset.length; index ++ ) {
       if ( charset.indexOf( charset[index], index + 1 ) != -1 ) {
-        addError( 'charset','Duplicate entries')
+        addError( "charset","Duplicate entries")
         break
       }
     }
@@ -714,16 +776,53 @@ export function checkConfig( config: NumerickConfig ) {
   }
 
   if ( !isArray( charset ) )
-    charset = (charset as string).split('')
+    charset = (charset as string).split("")
 
   charset = charset.slice( 0, radix )
 
   if ( scientific && charset.indexOf( scientificString ) )
-    addError('scientificString', 'is included in charset')
+    addError("scientificString", "is included in charset")
+
+
+  if ( metric ) {
+    let lowest = Infinity
+    let hasOne = false
+
+    for ( const key in metricScale ) {
+      const value = metricScale[key]
+
+      if ( !isRealNumber( value ) ) {
+        addError("metricScale",`Non-numeric value for key ${key}`)
+        break
+      }
+
+      if ( value == 1 )
+        hasOne = true
+
+      if ( value > lowest ) {
+        addError("metricScale","Values are not correctly ordered")
+        break
+      }
+      lowest = value
+    }
+
+    if ( lowest < 1 && !hasOne )
+      addWarning("metricScale","No value for 1 provided")
+  }
+
+  if ( logarithmic ) {
+    if ( ( min - origin ) <= 0 ) {
+      addError("logarithmic", "Invalid min")
+    }
+
+    if ( ( max - origin ) <= 0 ) {
+      addError("logarithmic", "Invalid max")
+    }
+  }
 
   return result
 }
 
 function regexEscape( str: string ) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
