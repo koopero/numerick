@@ -75,7 +75,7 @@ const configDefault: NumerickConfig = {
   digits: 4,
   step: 0,
   logarithmic: false,
-  quant: 0.0000125,
+  quant: 1/4000,
   deadzone: 0,
   length: 0,
   negative: "-",

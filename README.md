@@ -104,7 +104,7 @@ import {
   metricScaleBinary,
   metricScaleBinaryParse,
   metricScaleBinaryShort, 
-} from 'numerick
+} from 'numerick'
 
 // Read binary metric numbers with loose formatting
 stringToNumber( '64k', { metric: true, metricScale: metricScaleBinaryParse } ) == 65536
