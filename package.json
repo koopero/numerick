@@ -1,6 +1,6 @@
 {
   "name": "numerick",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Bidirectional conversion between inputs and numbers",
   "source": "src/numerick.ts",
   "main": "dist/index.js",

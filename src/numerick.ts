@@ -438,6 +438,18 @@ export function numberFormat(num: number, config: NumerickConfig = {}) {
 
   if (isNaN(num)) {
     resultNaN = nanString
+    return [
+      resultPrefix,
+      resultSign,
+      resultNaN,
+      resultWhole,
+      resultPoint,
+      resultFract,
+      resultMultiplier,
+      resultExponent,
+      unit,
+    ]
+    
   } else if (!isFinite(num)) {
     resultNaN = infinityString
   } else {

@@ -197,6 +197,10 @@ describe("config.radix", () => {
       expect(numberToString(2, { radix: 2 })).toBe("10")
       expect(numberToString(37, { radix: 36 })).toBe("11")
     })
+
+    test("will handle NaN", () => {
+      expect(numberToString(NaN, { precision: 5 })).toBe("NaN")
+    })
   })
 
   describe("checkConfig", () => {
