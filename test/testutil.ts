@@ -36,7 +36,6 @@ export function testConversions(name: string, config: NumerickConfig) {
       for (let index = 0; index <= div; index++) {
         const norm = index / div
         const string = normToString(norm, config)
-        const backToNumber = normToNumber(norm, config)
         const backToNorm = stringToNorm(string, config)
         expect(backToNorm).toBeCloseTo(norm, 2)
       }

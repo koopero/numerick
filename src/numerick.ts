@@ -449,7 +449,7 @@ export function numberFormat(num: number, config: NumerickConfig = {}) {
       resultExponent,
       unit,
     ]
-    
+
   } else if (!isFinite(num)) {
     resultNaN = infinityString
   } else {
@@ -523,10 +523,10 @@ export function numberFormat(num: number, config: NumerickConfig = {}) {
     precision == 0
       ? 0
       : precision == 1
-      ? length
-        ? length - lengthSoFar
-        : precisionMax
-      : precision
+        ? length
+          ? length - lengthSoFar
+          : precisionMax
+        : precision
 
   if (digitBudget > pointString.length) {
     if (padZero && !padStart) {
@@ -592,9 +592,9 @@ function parseNumberRegex(config: NumerickConfig = {}) {
   const sign = "[\\-\\+]?"
   const digit = isArray(charset)
     ? `(${(charset as Array<string>)
-        .slice(0, radix)
-        .map(regexEscape)
-        .join("|")})`
+      .slice(0, radix)
+      .map(regexEscape)
+      .join("|")})`
     : `[${(charset as string).substring(0, radix)}]`
 
   const scientificReg =
@@ -673,8 +673,8 @@ export function stringToNumberUnit(str: string, config: NumerickConfig = {}) {
   let value: number = parsed.startsWith(infinityString)
     ? Infinity
     : parsed.startsWith(negative + infinityString)
-    ? -Infinity
-    : parseFloatWithRadix(parsed, radix)
+      ? -Infinity
+      : parseFloatWithRadix(parsed, radix)
 
   value *= mult
 

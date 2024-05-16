@@ -331,7 +331,7 @@ describe("separators", () => {
 
   test("will parse numbers with common separators", () => {
     expect(stringToNumber("1_0_0_0")).toBe(1000)
-    expect(stringToNumber(`1'0'0'0`)).toBe(1000)
+    expect(stringToNumber("1'0'0'0")).toBe(1000)
   })
 
   test("will parse numbers with arbitrary separators", () => {

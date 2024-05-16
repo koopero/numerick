@@ -5,14 +5,11 @@ import {
   stringToNumber,
   stringToNumberUnit,
   numberToString,
-  numberToNumber,
-  NumerickConfig,
   metricScaleBinaryShort,
   metricScaleBinary,
   metricScaleBinaryParse,
   checkConfig,
 } from "../src/numerick"
-import { expoGraph, testConversions } from "./testutil"
 
 describe("config.infinityString", () => {
   const infinityString = "reallyReallyBig"
