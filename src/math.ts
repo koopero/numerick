@@ -36,3 +36,47 @@ export const fractDeg = (num) => fract(num / 360) * 360
 export const isRealNumber = (num) => "number" == typeof num && !isNaN(num)
 export const sinDeg = (a) => sin((a / 180) * PI)
 export const cosDeg = (a) => cos((a / 180) * PI)
+
+export const isArray = (value) => Array.isArray(value)
+export function isNegativeZero(value: number) {
+  return value === 0 && 1 / value === -Infinity
+}
+
+
+export function applyCharset(
+  str: string,
+  charset: string | string[],
+  to: string | string[]
+) {
+  const reg = isArray(charset)
+    ? `(${(charset as Array<string>).map(regexEscape).join("|")})`
+    : `[${charset as string}]`
+
+  const ex = new RegExp(reg, "g")
+  str = str.replace(ex, (match) => to[charset.indexOf(match)] || "")
+  return str
+}
+
+
+export function regexEscape(str: string) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+export function splitFractional(str: string) {
+  const split = str.split(".")
+  return [split[0], split[1] || ""]
+}
+
+export const charsetStandard = "0123456789abcdefghijklmnopqrstuvwxyz"
+
+export function isString( value: any ) {
+  return typeof value === "string"
+}
+
+export function isRegex( value: any ) {
+  return value instanceof RegExp  
+}
+
+export function isObject( value: any ) {
+  return typeof value === "object"
+}

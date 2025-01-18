@@ -6,7 +6,7 @@ import {
   stringToNorm,
   NumerickConfig,
   numberToNumber,
-} from "../src/numerick"
+} from "../src"
 
 import * as asciichart from "asciichart"
 
